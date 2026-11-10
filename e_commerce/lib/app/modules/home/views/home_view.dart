@@ -87,12 +87,12 @@ class HomeView extends GetView<HomeController> {
                   color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
                 ),
                 children: const [
-                  TextSpan(text: 'Kicks'),
-                  TextSpan(
-                    text: 'Store',
-                    style: TextStyle(color: AppColors.primary),
-                  ),
-                ],
+  TextSpan(text: 'Stride'),
+  TextSpan(
+    text: 'Store',
+    style: TextStyle(color: AppColors.primary),
+  ),
+],
               ),
             ),
           ],
