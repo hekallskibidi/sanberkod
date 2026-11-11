@@ -1,88 +1,69 @@
-import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../../data/models/product_model.dart';
+import '../../cart/controllers/cart_controller.dart';
 import '../../home/controllers/home_controller.dart';
 
 class DetailController extends GetxController {
   final quantity = 1.obs;
-  final selectedSize = 42.obs;
+  final selectedSize = '42'.obs;
   final isFavorite = false.obs;
 
-  late final Map<String, dynamic> product;
+  late final ProductModel product;
+  final List<String> availableSizes = const [
+    '39',
+    '40',
+    '41',
+    '42',
+    '43',
+    '44',
+  ];
 
-  final List<int> availableSizes = const [39, 40, 41, 42, 43, 44];
+  CartController get cartController => Get.find<CartController>();
+  HomeController get homeController => Get.find<HomeController>();
 
   @override
   void onInit() {
     super.onInit();
-
     final arguments = Get.arguments;
 
-    if (arguments is Map) {
-      product = Map<String, dynamic>.from(arguments);
+    if (arguments is ProductModel) {
+      product = arguments;
+    } else if (arguments is Map) {
+      product = ProductModel.fromMap(Map<String, dynamic>.from(arguments));
     } else {
-      // Fallback jika halaman detail dibuka tanpa argumen.
-      product = {
-        'id': 'default-sneaker',
-        'title': 'Nike Air Jordan 1 Retro High',
-        'category': 'Basketball',
-        'price': 'Rp 2.499.000',
-        'rating': 4.9,
-        'image':
-            'https://images.unsplash.com/photo-1552346154-21d32810aba3?w=500&q=80',
-      };
+      product = homeController.products.first;
     }
 
-    final productId = product['id']?.toString();
-
-    if (productId != null && Get.isRegistered<HomeController>()) {
-      isFavorite.value = Get.find<HomeController>().isFavorite(productId);
-    }
+    isFavorite.value = homeController.isFavorite(product.id);
   }
 
-  void incrementQuantity() {
-    quantity.value++;
-  }
+  void incrementQuantity() => quantity.value++;
 
   void decrementQuantity() {
-    if (quantity.value > 1) {
-      quantity.value--;
-    }
+    if (quantity.value > 1) quantity.value--;
   }
 
-  void selectSize(int size) {
-    selectedSize.value = size;
+  void selectSize(String size) {
+    if (availableSizes.contains(size)) selectedSize.value = size;
   }
 
   void toggleFavorite() {
-    final productId = product['id']?.toString();
-
-    if (productId != null && Get.isRegistered<HomeController>()) {
-      final homeController = Get.find<HomeController>();
-      homeController.toggleFavorite(productId);
-      isFavorite.value = homeController.isFavorite(productId);
-    } else {
-      isFavorite.toggle();
-    }
+    homeController.toggleFavorite(product.id);
+    isFavorite.value = homeController.isFavorite(product.id);
   }
 
   void addToCart() {
-    // HomeController tetap menjadi sumber state cartCount.
-    final homeController = Get.isRegistered<HomeController>()
-        ? Get.find<HomeController>()
-        : Get.put(HomeController());
-
-    homeController.addToCart(product, quantity: quantity.value);
+    cartController.addItem(
+      product,
+      quantity: quantity.value,
+      size: selectedSize.value,
+    );
 
     Get.snackbar(
       'Berhasil Ditambahkan',
-      '${quantity.value} item ${product['title']} '
-          '(Size ${selectedSize.value}) masuk ke keranjang!',
+      '${quantity.value} ${product.name} (Size ${selectedSize.value}) masuk ke keranjang.',
       snackPosition: SnackPosition.BOTTOM,
-      backgroundColor: Get.theme.colorScheme.primary,
-      colorText: Get.theme.colorScheme.onPrimary,
-      margin: const EdgeInsets.all(16),
-      borderRadius: 12,
       duration: const Duration(seconds: 2),
     );
   }
