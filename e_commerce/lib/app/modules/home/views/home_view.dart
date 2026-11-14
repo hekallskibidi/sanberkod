@@ -3,8 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import 'package:e_commerce/app/core/theme/app_colors.dart';
+import 'package:e_commerce/app/data/local/storage_service.dart';
 import 'package:e_commerce/app/routes/app_pages.dart';
 import '../controllers/home_controller.dart';
+import '../widgets/product_card_shimmer.dart';
 import 'components/product_card.dart';
 import 'components/promo_banner.dart';
 
@@ -73,9 +75,7 @@ class HomeView extends GetView<HomeController> {
             icon: Icon(
               isDark ? Icons.light_mode_rounded : Icons.dark_mode_rounded,
             ),
-            onPressed: () => Get.changeThemeMode(
-              Get.isDarkMode ? ThemeMode.light : ThemeMode.dark,
-            ),
+            onPressed: () => Get.find<StorageService>().toggleTheme(),
           ),
           Obx(() {
             final count = controller.cartCount;
@@ -121,8 +121,7 @@ class HomeView extends GetView<HomeController> {
       body: Obx(() {
         final products = controller.filteredProducts;
 
-        // Flutter Web does not enable mouse dragging for scrolling by default.
-        // Enable it so pull-to-refresh can be tested in desktop Chrome too.
+        // Flutter Web tidak mengaktifkan drag mouse untuk scroll secara default.
         return ScrollConfiguration(
           behavior: const MaterialScrollBehavior().copyWith(
             dragDevices: {
@@ -145,17 +144,6 @@ class HomeView extends GetView<HomeController> {
               ),
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               children: [
-                if (controller.isLoading.value && controller.products.isEmpty)
-                  const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 28),
-                    child: Column(
-                      children: [
-                        CircularProgressIndicator(color: AppColors.primary),
-                        SizedBox(height: 14),
-                        Text('Memuat katalog sneakers dari server...'),
-                      ],
-                    ),
-                  ),
                 if (controller.errorMessage.value.isNotEmpty &&
                     !controller.hasRemoteData.value)
                   _buildOfflineCard(
@@ -273,14 +261,16 @@ class HomeView extends GetView<HomeController> {
                   ],
                 ),
                 const SizedBox(height: 12),
-                if (products.isEmpty && !controller.isLoading.value)
+                if (controller.isLoading.value)
+                  const ProductGridShimmer(itemCount: 4)
+                else if (products.isEmpty)
                   const Padding(
                     padding: EdgeInsets.all(32),
                     child: Center(
                       child: Text('Belum ada produk untuk kategori ini.'),
                     ),
                   )
-                else if (products.isNotEmpty)
+                else
                   GridView.builder(
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
